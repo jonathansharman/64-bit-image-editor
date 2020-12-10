@@ -1,0 +1,30 @@
+* {
+	font-size: 20pt;
+}
+
+input {
+	display: block;
+	padding: 10px 10px;
+}
+
+canvas {
+	border: 1px black solid;
+	display: block;
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+button {
+	padding: 10px 10px;
+	
+}
+
+.center {
+	width: 512;
+	margin: auto;
+}
+
+.buttons {
+	display: flex;
+	justify-content: space-between;
+}
