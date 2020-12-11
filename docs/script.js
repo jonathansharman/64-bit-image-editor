@@ -1,17 +1,19 @@
 "use strict";
 
+let url = document.getElementById("url");
 let input = document.getElementById("input");
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 let gridButton = document.getElementById("gridButton");
 let clearButton = document.getElementById("clearButton");
+let copyLinkButton = document.getElementById("copyLinkButton");
 
 const nrows = 8;
 const ncols = 8;
 const cellWidth = canvas.width / ncols;
 const cellHeight = canvas.height / nrows;
 
-let value = 0n;
+let picture = 0n;
 let showGrid = true;
 
 function drawLine(x0, y0, x1, y1) {
@@ -25,20 +27,20 @@ function drawLine(x0, y0, x1, y1) {
 	ctx.translate(-0.5, -0.5);
 }
 
-// Draw the current value.
+// Draws the current picture and updates the URL.
 function updateImage() {
 	ctx.fillStyle = "#FFFFFF";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
-	let currentValue = value;
+	let pictureCopy = picture;
 	for (let row = 0; row < nrows; ++row) {
 		for (let col = 0; col < ncols; ++col) {
-			if (currentValue & 1n) {
+			if (pictureCopy & 1n) {
 				ctx.fillStyle = "#000000";
 			} else {
 				ctx.fillStyle = "#FFFFFF";
 			}
 			ctx.fillRect(col * cellWidth, row * cellWidth, (col + 1) * cellWidth, (row + 1) * cellWidth);
-			currentValue /= 2n;
+			pictureCopy /= 2n;
 		}
 	}
 	if (showGrid) {
@@ -51,14 +53,19 @@ function updateImage() {
 			drawLine(0, y, canvas.width, y);
 		}
 	}
+	// Add current picture to URL.
+	let split = window.location.href.split("?");
+	window.history.pushState(null, null, split[0] + "?picture=" + picture);
+	// Update the URL text.
+	url.innerHTML = window.location.href;
 }
 
-// Update the current value when the input text changes.
+// Update the current picture when the input text changes.
 input.addEventListener("input", function() {
 	try {
-		value = BigInt(input.value);
-	} catch(e) {
-		value = 0n;
+		picture = BigInt(input.value);
+	} catch (e) {
+		picture = 0n;
 	}
 	updateImage();
 });
@@ -73,9 +80,9 @@ canvas.addEventListener("mousedown", function(event) {
 		const col = Math.trunc(ncols * event.offsetX / canvas.width);
 		const row = Math.trunc(nrows * event.offsetY / canvas.height);
 		let bit = 1n << BigInt(row * ncols + col);
-		value = value ^ bit;
+		picture = picture ^ bit;
 		updateImage();
-		input.value = value;
+		input.value = picture;
 	}
 });
 
@@ -87,10 +94,24 @@ gridButton.addEventListener("click", function() {
 
 // Clear the current image.
 clearButton.addEventListener("click", function() {
-	value = 0n;
+	picture = 0n;
 	input.value = "0";
 	updateImage();
 });
+
+// Copy the link to the image.
+copyLinkButton.addEventListener("click", function() {
+	window.getSelection().selectAllChildren(url);
+	document.execCommand("copy");
+	window.getSelection().removeAllRanges();
+});
+
+// Check for a picture URL parameter.
+try {
+	picture = BigInt(new URLSearchParams(window.location.search).get("picture"));
+} catch (e) {
+	// No parameter found. Ignore.
+}
 
 // Update image at the start to draw grid.
 updateImage();
