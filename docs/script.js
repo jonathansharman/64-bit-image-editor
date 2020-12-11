@@ -16,6 +16,16 @@ const cellHeight = canvas.height / nrows;
 let picture = 0n;
 let showGrid = true;
 
+let notDrawing = 0;
+let marking = 1;
+let erasing = 2;
+// The current method of drawing: marking, erasing, or null if neither.
+let penMode = notDrawing;
+// The most recently drawn row.
+let lastRow = null;
+// The most recently drawn column.
+let lastCol = null;
+
 function drawLine(x0, y0, x1, y1) {
 	// Properly align drawing to pixels.
 	ctx.translate(0.5, 0.5);
@@ -74,15 +84,45 @@ input.addEventListener("click", function() {
 	this.select();
 });
 
-// Update pixels by clicking the image.
+// Update pixels by clicking and dragging.
+function togglePixel(x, y) {
+	const col = Math.trunc(ncols * x / canvas.width);
+	const row = Math.trunc(nrows * y / canvas.height);
+	// Draw if row-col has changed since the last call.
+	if (col != lastCol || row != lastRow) {
+		lastRow = row;
+		lastCol = col;
+		// Toggle the corresponding bit if compatible with the current pen mode.
+		const bitMask = 1n << BigInt(row * ncols + col);
+		const bitIsSet = (picture & bitMask) === 0n;
+		const penModeMatches = (penMode == notDrawing)
+			|| (penMode === erasing && bitIsSet)
+			|| (penMode === marking && !bitIsSet);
+		if (penModeMatches) {
+			picture = picture ^ bitMask;
+			// Update image and input box.
+			updateImage();
+			input.value = picture;
+			// Set the pen mode based on whether the bit was set or unset.
+			penMode = bitIsSet ? erasing : marking;
+		}
+	}
+}
 canvas.addEventListener("mousedown", function(event) {
 	if (event.button === 0) {
-		const col = Math.trunc(ncols * event.offsetX / canvas.width);
-		const row = Math.trunc(nrows * event.offsetY / canvas.height);
-		let bit = 1n << BigInt(row * ncols + col);
-		picture = picture ^ bit;
-		updateImage();
-		input.value = picture;
+		togglePixel(event.offsetX, event.offsetY);
+	}
+});
+canvas.addEventListener("mousemove", function(event) {
+	if (penMode !== notDrawing) {
+		togglePixel(event.offsetX, event.offsetY, penMode);
+	}
+});
+document.addEventListener("mouseup", function(event) {
+	if (event.button === 0) {
+		penMode = notDrawing;
+		lastRow = null;
+		lastCol = null;
 	}
 });
 

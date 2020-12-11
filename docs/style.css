@@ -1,4 +1,4 @@
-* {
+input, button {
 	font-size: 20pt;
 }
 
@@ -23,7 +23,7 @@ canvas {
 
 button {
 	padding: 10px 10px;
-	
+	user-select: none;
 }
 
 .center {
