@@ -109,6 +109,7 @@ copyLinkButton.addEventListener("click", function() {
 // Check for a picture URL parameter.
 try {
 	picture = BigInt(new URLSearchParams(window.location.search).get("picture"));
+	input.value = picture;
 } catch (e) {
 	// No parameter found. Ignore.
 }
